@@ -33,6 +33,11 @@ func NewDBFile(path string) (*DBFile, error) {
 	return newInternal(fileName)
 }
 
+// NewMergeDBFile 新建一个合并时的数据文件
+func NewMergeDBFile(path string) (*DBFile, error) {
+	fileName := path + string(os.PathSeparator) + MergeFileName
+	return newInternal(fileName)
+}
 
 func (df *DBFile) Read(offset int64) (e *cache.Entry, err error) {
 	buf := make([]byte, cache.EntryHeaderSize)
@@ -60,5 +65,16 @@ func (df *DBFile) Read(offset int64) (e *cache.Entry, err error) {
 		}
 		e.Value = value
 	}
+	return
+}
+
+// Write 写入 Entry
+func (df *DBFile) Write(e *cache.Entry) (err error) {
+	enc, err := e.Encode()
+	if err != nil {
+		return err
+	}
+	_, err = df.File.WriteAt(enc, df.Offset)
+	df.Offset += e.GetSize()
 	return
 }
